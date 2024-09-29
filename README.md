@@ -9,7 +9,8 @@
   - [3. 程序性能测试](#6-程序性能测试)
 
 ## 1. 简介
-ChatGLM4-9B 是开源中英双语对话模型 ChatGLM 的第四代版本，关于它的特性，请前往源repo查看：https://huggingface.co/THUDM/glm-4-9b-chat。本例程对ChatGLM4-9B进行移植，使之能在SOPHON BM1684X上进行推理测试。
+
+Faceformer是一个基于Transformer的自回归模型，专门设计用于驱动3D面部动画的任务。这个模型通过处理语音数据来生成动画的3D面部网格序列，解决了传统方法在面部动画生成中存在的一些限制。关于它的特性，请前往源repo查看：https://github.com/EvelynFan/FaceFormer。本例程对FaceFormer进行移植，使之能在SOPHON BM1684X上进行推理测试。
 
 该例程支持在V24.04.01(libsophon_0.5.1)及以上的SDK上运行，支持在插有1684X加速卡(SC7系列)的x86主机上运行，也可以在1684X SoC设备（如SE7、SM7、Airbox等）上运行。在SoC上运行需要额外进行环境配置，请参照[运行环境准备](#3-运行环境准备)完成环境部署。
 
