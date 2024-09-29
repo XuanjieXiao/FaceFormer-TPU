@@ -1,0 +1,10 @@
+*.log
+*.pth
+*.bmodel
+*.onnx
+*.npz
+*.pkl
+*.bin
+*.h5
+*.safetensors
+wav2vec2-base-960h/
