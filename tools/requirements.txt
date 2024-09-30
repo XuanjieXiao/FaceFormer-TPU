@@ -1,0 +1,4 @@
+conda create -n faceformer python=3.9.19
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 cpuonly -c pytorch
+
+python3 export_onnx.py --model_name vocaset --wav_path "demo/wav/test2.mp3" --dataset vocaset
