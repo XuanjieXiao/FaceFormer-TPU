@@ -19,7 +19,7 @@ parser.add_argument("--device", type=str, default="cpu")
 parser.add_argument("--train_subjects", type=str, default="FaceTalk_170728_03272_TA FaceTalk_170904_00128_TA FaceTalk_170725_00137_TA FaceTalk_170915_00223_TA FaceTalk_170811_03274_TA FaceTalk_170913_03279_TA FaceTalk_170904_03276_TA FaceTalk_170912_03278_TA")
 parser.add_argument("--test_subjects", type=str, default="FaceTalk_170809_00138_TA FaceTalk_170731_00024_TA")
 parser.add_argument("--output_path", type=str, default="../Data/output", help='path of the rendered video sequence')
-parser.add_argument("--wav_path", type=str, default="../Data/wav/audio.mp3", help='path of the input audio signal')
+parser.add_argument("--wav_path", type=str, default="../Data/wav/test1.wav", help='path of the input audio signal')
 parser.add_argument("--result_path", type=str, default="../Data/result", help='path of the predictions')
 parser.add_argument("--condition", type=str, default="FaceTalk_170913_03279_TA", help='select a conditioning subject from train_subjects')
 parser.add_argument("--subject", type=str, default="FaceTalk_170809_00138_TA", help='FaceTalk_170809_00138_TA select a subject from test_subjects or train_subjects')
@@ -35,6 +35,18 @@ model_path = os.path.join(args.dataset, '{}.pth'.format(args.model_name))
 model.load_state_dict(torch.load(model_path, map_location=device))
 model = model.to(device)
 model.eval()
+
+
+# 设置目标文件夹路径
+export_path = './onnx'
+
+# 检查文件夹是否存在
+if not os.path.exists(export_path):
+    # 文件夹不存在，创建文件夹
+    os.makedirs(export_path)
+    print("文件夹已创建：", export_path)
+else:
+    print("文件夹已存在：", export_path)
 
 def enc_dec_mask(device, dataset, T, S):
     mask = torch.ones(T, S)
@@ -84,32 +96,6 @@ class FaceFormerDecoder(torch.nn.Module):
         new_output = self.vertice_map(vertice_out[:,-1,:]).unsqueeze(1)
         return vertice_out, new_output
 
-template_file = os.path.join(args.dataset, args.template_path)
-with open(template_file, 'rb') as fin:
-    templates = pickle.load(fin,encoding='latin1')
-
-train_subjects_list = [i for i in args.train_subjects.split(" ")]
-
-one_hot_labels = np.eye(len(train_subjects_list))
-iter = train_subjects_list.index(args.condition)
-one_hot = one_hot_labels[iter]
-one_hot = np.reshape(one_hot,(-1,one_hot.shape[0]))
-one_hot = torch.FloatTensor(one_hot).to(device=args.device)
-
-temp = templates[args.subject]
-            
-template = temp.reshape((-1))
-template = np.reshape(template,(-1,template.shape[0]))
-template = torch.FloatTensor(template).to(device=args.device)
-
-wav_path = args.wav_path
-speech_array, _ = librosa.load(os.path.join(wav_path), sr=16000)
-processor = Wav2Vec2Processor.from_pretrained("/home/qlw/xuanjiexiao/faceformer/FaceFormer/wav2vec2-base-960h")
-processor_output = processor(speech_array,sampling_rate=16000).input_values
-audio_feature = np.squeeze(processor_output)
-audio_feature = np.reshape(audio_feature,(-1,audio_feature.shape[0]))
-audio_feature = torch.FloatTensor(audio_feature).to(device=args.device)
-
 # linear interpolation layer
 def linear_interpolation(features, input_fps, output_fps, output_len=None):
     features = features.transpose(1, 2)
@@ -118,12 +104,6 @@ def linear_interpolation(features, input_fps, output_fps, output_len=None):
         output_len = int(seq_len * output_fps)
     output_features = F.interpolate(features,size=output_len,align_corners=True,mode='linear')
     return output_features.transpose(1, 2)
-
-#### test net ####
-audio_encoder = FaceFormerAudioEncoder()
-PPE = FaceFormerPPE()
-decoder = FaceFormerDecoder()
-dataset = 'vocaset'
 
 class AudioModelFirst(torch.nn.Module):
     def __init__(self, audio_encoder:torch.nn.Module):
@@ -140,21 +120,7 @@ class AudioModelFirst(torch.nn.Module):
 
         hidden_states = self.audio_encoder.feature_extractor(input_values)
         hidden_states = hidden_states.transpose(1, 2)
-        breakpoint()
         return hidden_states
-
-
-mymodel1 = AudioModelFirst(audio_encoder.audio_encoder)
-# random_tensor = torch.rand(1, 262144)
-# test_out = mymodel(random_tensor)
-test_out = mymodel1(audio_feature)
-hidden_states_out1 = linear_interpolation(test_out, 50, 30,output_len=None)
-
-torch.onnx.export(
-    mymodel1, 
-    (audio_feature), 
-    './onnx/audio_encoder_1.onnx', 
-    input_names=['audio_feature'],output_names = ['hidden_states'], dynamic_axes={'audio_feature': {1: 'audio_length'}}, verbose=True)
 
 class AudioModelSecond(torch.nn.Module):
     def __init__(self, audio_encoder:torch.nn.Module):
@@ -177,18 +143,63 @@ class AudioModelSecond(torch.nn.Module):
         hidden_states = self.audio_feature_map(hidden_states)
 
         return hidden_states, obj_embedding
-    
+
+template_file = os.path.join(args.dataset, args.template_path)
+with open(template_file, 'rb') as fin:
+    templates = pickle.load(fin,encoding='latin1')
+
+train_subjects_list = [i for i in args.train_subjects.split(" ")]
+
+one_hot_labels = np.eye(len(train_subjects_list))
+iter = train_subjects_list.index(args.condition)
+one_hot = one_hot_labels[iter]
+one_hot = np.reshape(one_hot,(-1,one_hot.shape[0]))
+one_hot = torch.FloatTensor(one_hot).to(device=args.device)
+
+temp = templates[args.subject]
+            
+template = temp.reshape((-1))
+template = np.reshape(template,(-1,template.shape[0]))
+template = torch.FloatTensor(template).to(device=args.device)
+
+wav_path = args.wav_path
+speech_array, _ = librosa.load(os.path.join(wav_path), sr=16000)
+processor = Wav2Vec2Processor.from_pretrained("./wav2vec2-base-960h")
+processor_output = processor(speech_array,sampling_rate=16000).input_values
+audio_feature = np.squeeze(processor_output)
+audio_feature = np.reshape(audio_feature,(-1,audio_feature.shape[0]))
+audio_feature = torch.FloatTensor(audio_feature).to(device=args.device)
+
+#### test net ####
+audio_encoder = FaceFormerAudioEncoder()
+PPE = FaceFormerPPE()
+decoder = FaceFormerDecoder()
+dataset = 'vocaset'
+
+mymodel1 = AudioModelFirst(audio_encoder.audio_encoder)
+# 这里使用最大的输入来进行导出模型
+# 如果您想测试模型的输入输出，可以将下面的行注释
+audio_feature = torch.rand(1, 262144)
+
+test_out = mymodel1(audio_feature)
+hidden_states_out1 = linear_interpolation(test_out, 50, 30,output_len=None)
+
+torch.onnx.export(
+    mymodel1, 
+    (audio_feature), 
+    os.path.join(export_path, 'audio_encoder_1.onnx'), 
+    input_names=['audio_feature'],output_names = ['hidden_states'], dynamic_axes={'audio_feature': {1: 'audio_length'}}, verbose=True)
 
 mymodel2 = AudioModelSecond(audio_encoder.audio_encoder)
-random_tensor2 = torch.rand(1, 490, 512)
-# one_hot_random_tensor = torch.rand(1, 8)
+# random_tensor2 = torch.rand(1, 490, 512)
+# one_hot = torch.rand(1, 8)
 # hidden_states, obj_embedding = mymodel2(random_tensor2, one_hot_random_tensor)
 hidden_states, obj_embedding = mymodel2(hidden_states_out1, one_hot)
 
 torch.onnx.export(
     mymodel2, 
-    (hidden_states, one_hot), 
-    './onnx/audio_encoder_2.onnx', 
+    (hidden_states_out1, one_hot), 
+    os.path.join(export_path, 'audio_encoder_2.onnx'), 
     input_names=['hidden_states', 'one_hot'], dynamic_axes={'hidden_states': {1: 'frame_num'}}, verbose=True)
 
 frame_num = hidden_states.shape[1]
@@ -201,11 +212,11 @@ for i in range(frame_num):
     else:
         vertice_input = PPE(vertice_emb)
         if i == 489: #vertice_emb大小（[1,490,64]）
-            torch.onnx.export(PPE, (vertice_emb), './onnx/ppe.onnx', input_names=['embedding'], dynamic_axes={'embedding': {1:'frame_num'}})
+            torch.onnx.export(PPE, (vertice_emb), os.path.join(export_path, 'ppe.onnx'), input_names=['embedding'], dynamic_axes={'embedding': {1:'frame_num'}})
     memory_mask = enc_dec_mask(device, "vocaset", vertice_input.shape[1], hidden_states.shape[1])
     vertice_out, new_output = decoder(vertice_input, hidden_states, memory_mask)
     if i == 489:
-        torch.onnx.export(decoder, (vertice_input, hidden_states, memory_mask), './onnx/decoder.onnx', input_names=['vertice_input', 'hidden_states', 'memory_mask'], dynamic_axes={'vertice_input': {1:'frame_num'}, 'hidden_states': {1:'frame_num'}, 'memory_mask': {0:'past_frame', 1:'all_frame'}})
+        torch.onnx.export(decoder, (vertice_input, hidden_states, memory_mask), os.path.join(export_path, 'decoder.onnx'), input_names=['vertice_input', 'hidden_states', 'memory_mask'], dynamic_axes={'vertice_input': {1:'frame_num'}, 'hidden_states': {1:'frame_num'}, 'memory_mask': {0:'past_frame', 1:'all_frame'}})
     new_output = new_output + style_emb
     vertice_emb = torch.cat((vertice_emb, new_output), 1)
 template = template.unsqueeze(1)
