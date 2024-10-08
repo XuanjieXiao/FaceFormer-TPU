@@ -1,4 +1,4 @@
-# FaceFormer模型导出与编译
+# FaceFormer模型导出与编译(还未完善)
 
 ## 1. 准备工作
 
@@ -59,7 +59,7 @@ FaceFormer模型导出需要依赖[FaceFormer官方仓库](https://github.com/Ev
 
 ### 2.2 获取onnx
 
-### 2.2.1 下载FaceFormer官方代码
+### 2.2.1 下载FaceFormer官方代码及权重
 
 **注：** FaceFormer官方库18G左右，在下载之前，要确认自己有huggingface官网的access token或者SSH key。
 ```bash

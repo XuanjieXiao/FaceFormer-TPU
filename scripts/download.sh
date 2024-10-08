@@ -10,30 +10,36 @@ scripts_dir=$(dirname $(readlink -f "$0"))
 
 pushd $scripts_dir
 # datasets
+if [ ! -d "../Data" ]; 
+then
+    python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/Data.zip
+    unzip Data.zip -d ../
+    rm Data.zip
+    echo "Data download!"
+else
+    echo "Data folder exist! Remove it if you need to update."
+fi
 
 # models
 if [ ! -d "../models" ]; 
 then
-    mkdir -p ../models/
-    mkdir -p ../models/BM1684X
-    pushd ../models/BM1684X
-    python3 -m dfss --url=open@sophgo.com:sophon-demo/ChatGLM4/models/BM1684X/glm4-9b_int4_1dev.bmodel
-    python3 -m dfss --url=open@sophgo.com:sophon-demo/ChatGLM4/models/BM1684X/glm4-9b_int8_1dev.bmodel
-    popd
+    python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/models.zip
+    unzip models.zip -d ../
+    rm models.zip
     echo "models download!"
 else
     echo "Models folder exist! Remove it if you need to update."
 fi
 
-if [ ! -d "../python/token_config" ];
+if [ ! -d "../tools/wav2vec2-base-960h" ] || [ ! -d "../tools/vocaset" ];
 then
-    pushd ../python
-    python3 -m dfss --url=open@sophgo.com:sophon-demo/ChatGLM4/token_config.zip
-    unzip token_config.zip
-    rm token_config.zip
+    pushd ../tools
+    python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/tools_dev.zip
+    unzip tools_dev.zip
+    rm tools_dev.zip
     popd
 else
-    echo "token_config exists! Remove it if you need to update."
+    echo "wav2vec2-base-960h or vocaset exists! Remove it if you need to update."
 fi
 
 popd
