@@ -12,3 +12,5 @@ wav2vec2-base-960h
 vocaset
 gen_npz.py
 Faceformer_Export_Guide.md
+Data
+models
