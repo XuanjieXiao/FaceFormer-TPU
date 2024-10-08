@@ -84,3 +84,5 @@ model_deploy.py \
     --model decoder.bmodel \
     --compare_all \
     --dynamic
+    
+popd

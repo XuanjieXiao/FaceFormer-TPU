@@ -1,13 +1,13 @@
-# ChatGLM4模型导出与编译
+# FaceFormer模型导出与编译
 
 ## 1. 准备工作
 
-ChatGLM4模型导出需要依赖[ChatGLM4官方仓库](https://huggingface.co/THUDM/glm-4-9b-chat)。onnx模型导出和转bmodel模型推荐在mlir部分提供的docker中完成。
+FaceFormer模型导出需要依赖[FaceFormer官方仓库](https://github.com/EvelynFan/FaceFormer)。onnx模型导出和转bmodel模型推荐在mlir部分提供的docker中完成。
 
 **注意：** 
 
 - 编译模型需要在x86主机完成。
-- 生成bmodel耗时大概3小时以上，建议64G内存以及200G以上硬盘空间，不然很可能OOM或者no space left。
+- 生成bmodel耗时大概30分钟以上，建议64G内存以及10GB以上硬盘空间，不然很可能OOM或者no space left。
 
 ## 2. 主要步骤
 
@@ -59,9 +59,9 @@ ChatGLM4模型导出需要依赖[ChatGLM4官方仓库](https://huggingface.co/TH
 
 ### 2.2 获取onnx
 
-### 2.2.1 下载ChatGLM4官方代码
+### 2.2.1 下载FaceFormer官方代码
 
-**注：** ChatGLM4-9B官方库18G左右，在下载之前，要确认自己有huggingface官网的access token或者SSH key。
+**注：** FaceFormer官方库18G左右，在下载之前，要确认自己有huggingface官网的access token或者SSH key。
 ```bash
 git lfs install
 git clone git@hf.co:THUDM/glm-4-9b-chat
@@ -100,11 +100,11 @@ export PYTHONPATH=/workspace/glm-4-9b-chat:$PYTHONPATH
 # 将/workspace/glm-4-9b-chat换成docker环境中您的glm-4-9b-chat仓库的路径
 python3 tools/export_onnx.py --model_path /workspace/glm-4-9b-chat --seq_length 512
 ```
-此时有大量onnx模型被导出到本例程中`ChatGLM4/models/onnx`的目录。
+此时有大量onnx模型被导出到本例程中`FaceFormer/models/onnx`的目录。
 
 ### 2.2 bmodel编译
 
-目前TPU-MLIR支持1684x对ChatGLM4进行INT8和INT4量化，使用如下命令生成bmodel。
+目前TPU-MLIR支持1684x对FaceFormer进行INT8和INT4量化，使用如下命令生成bmodel。
 
 ```bash
 mv ./tmp ./scripts
@@ -121,4 +121,14 @@ mv ./tmp ./scripts
 sudo apt install unzip
 chmod -R +x scripts/
 ./scripts/download.sh
+```
+
+
+
+
+```
+conda create -n faceformer python=3.9.19
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 cpuonly -c pytorch
+
+python3 export_onnx.py --model_name vocaset --wav_path "demo/wav/test2.mp3" --dataset vocaset
 ```

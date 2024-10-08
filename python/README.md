@@ -12,12 +12,11 @@
     * [3.1 使用方式](#31-使用方式)
 
 
-python目录下提供了一系列Python例程，具体情况如下：
+python目录下提供了一个Python例程，具体情况如下：
 
 | 序号 |  Python例程       | 说明                                |
 | ---- | ---------------- | -----------------------------------  |
 | 1    | faceformer.py     | 使用SAIL推理 |
-| 2    | web_demo.py     | 支持多会话的web demo |
 
 
 ## 1. 环境准备
@@ -51,9 +50,12 @@ python例程不需要编译，可以直接运行，PCIe平台和SoC平台的测�
 ### 2.1 参数说明
 
 ```bash
-usage: faceformer.py [--bmodel BMODEL] [--token TOKEN] [--dev_id DEV_ID]
---bmodel: 用于推理的bmodel路径；
---token: tokenizer目录路径；
+usage: faceformer.py [--bmodel1 BMODEL] [--bmodel1 BMODEL] [--dev_id DEV_ID]
+--bmodel_1: 用于推理的encoder和ppe的bmodel路径；
+--bmodel_2: 用于推理的decoder的bmodel路径；
+--model_name：模型的名字；
+--wav_path：测试的语音路径；
+--dataset：测试的数据集名字；
 --dev_id: 用于推理的tpu设备id；
 --help: 输出帮助信息
 ```
@@ -61,30 +63,7 @@ usage: faceformer.py [--bmodel BMODEL] [--token TOKEN] [--dev_id DEV_ID]
 ### 2.2 使用方式
 
 ```bash
-python3 python/faceformer.py --bmodel models/BM1684X/glm4-9b_int4_1dev.bmodel --token python/token_config --dev_id 0 
+cd python
+python3 faceformer.py --bmodel_1 ../models/BM1684X/faceformer_f32.bmodel --bmodel_2 ../models/BM1684X/decoder_f16.bmodel --model_name vocaset --wav_path ../Data/wav/test1.wav --dataset vocaset --dev_id 3 
 ```
-在读入模型后会显示"Question:"，然后输入就可以了。模型的回答会出现在"Answer"中。结束对话请输入"exit"。
-
-## 3. 支持多会话的Web Demo
-我们提供了基于[streamlit](https://streamlit.io/)的web demo，可同时进行多个会话的推理。
-
-### 3.1 使用方式
-首先安装第三方库
-```bash
-pip3 install -r python/requirements.txt
-```
-然后通过streamlit运行web_demo.py即可运行一个web_server
-
-```bash
-streamlit run python/web_demo.py --server.port 8501
-```
-
-首次运行需要输入邮箱，输入邮箱后命令行输出以下信息则表示启动成功
-```bash
- You can now view your Streamlit app in your browser.
-
-  Network URL: http://172.xx.xx.xx:8501
-  External URL: http://103.xx.xxx.xxx:8501
-```
-
-在浏览器中打开输出的地址即可使用，在底部对话框中输入问题。
+在程序执行完成后，会输出结果以及结果的维度： “result.shape:  (XXX, 15069)”。

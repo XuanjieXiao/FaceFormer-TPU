@@ -41,29 +41,30 @@ chmod -R +x scripts/
 执行下载脚本后，当前目录下的文件如下：
 
 ```bash
+.
+├── Data
+│   └── wav                           # 测试音频文件
 ├── docs
-│   └── FaceFormer_Export_Guide.md    #FaceFormer onnx导出和bmodel编译指南
+│   └── Faceformer_Export_Guide.md    #FaceFormer onnx导出和bmodel编译指南
 ├── models
-│   └── BM1684X                     #download.sh下载的bmodel
-│       ├── glm4-9b_int4_1dev.bmodel
-│       └── glm4-9b_int8_1dev.bmodel
+│   ├── BM1684X                     #download.sh下载的bmodel
+│   ├── onnx                        #export_onnx.py导出的onnx模型
+│   └── testInput                   #模型编译所需的测试数据
 ├── python
-│   ├── FaceFormer.py                 #FaceFormer python推理脚本
+│   ├── faceformer.py               #FaceFormer python推理脚本
 │   ├── README.md                   #python例程执行指南
-│   ├── requirements.txt            #python例程的依赖模块
-│   └── token_config                #download.sh下载的tokenizer
-│       ├── tokenization_chatglm.py
-│       ├── tokenizer_config.json
-│       └── tokenizer.model
-├── README.md                       #FaceFormer例程指南
-├── scripts                         
-│   ├── download.sh                 #下载脚本
+│   └── requirements.txt            #python例程的依赖模块
+├── README.md
+├── scripts
+│   ├── download.sh                 #模型及需求文件下载脚本
 │   └── gen_bmodel.sh               #模型编译脚本
 └── tools
-    ├── glm-4-9b-chat               #修改过的FaceFormer源码
-    │   ├── config.json
-    │   └── modeling_chatglm.py
-    └── export_onnx.py              #FaceFormer导出onnx脚本。
+    ├── export_onnx.py              #FaceFormer导出onnx脚本。
+    ├── faceformer.py               #FaceFormer的pytorch模型文件
+    ├── gen_npz.py                  #FaceFormer的模型编译所需的测试数据生成脚本
+    ├── vocaset                     #pytorch模型的权重文件等
+    ├── wav2vec2-base-960h          #download.sh下载的wav2vec2模型
+    └── wav2vec.py
 ```
 
 
@@ -81,7 +82,6 @@ chmod -R +x scripts/
 |    测试平台   |     测试程序       |           测试模型             |first token latency(s)|token per second(tokens/s)| 
 | -----------  | ---------------- | ---------------------------     | --------------------- | ----------------------- | 
 | SE7-32       | FaceFormer.py      | FaceFormer-9b_int8.bmodel         |    1.181              |    4.471          | 
-| SE7-32       | FaceFormer.py      | FaceFormer-9b_int4.bmodel         |    1.114              |    7.489          | 
 
 > **测试说明**：  
 > 1. 性能测试结果具有一定的波动性，建议多次测试取平均值；
