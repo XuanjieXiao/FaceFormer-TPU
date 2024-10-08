@@ -68,6 +68,8 @@ model_deploy.py \
     --compare_all \
     --dynamic
 
+model_tool --combine audio_encoder_1.bmodel audio_encoder_2.bmodel ppe.bmodel -o faceformer_f32.bmodel
+
 # decoder
 model_transform.py \
     --model_name decoder \
@@ -81,8 +83,8 @@ model_deploy.py \
     --mlir decoder.mlir \
     --quantize F16 \
     --chip bm1684x \
-    --model decoder.bmodel \
+    --model decoder_f16.bmodel \
     --compare_all \
     --dynamic
-    
+
 popd
