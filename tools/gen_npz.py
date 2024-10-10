@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 # 设置目标文件夹路径
-test_path = '../models/testInput'
+test_path = './models/testInput'
 
 # 检查文件夹是否存在
 if not os.path.exists(test_path):

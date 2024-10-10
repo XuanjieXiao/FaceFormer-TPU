@@ -7,11 +7,11 @@ FaceFormer模型导出需要依赖[FaceFormer官方仓库](https://github.com/Ev
 **注意：** 
 
 - 编译模型需要在x86主机完成。
-- 生成bmodel耗时大概30分钟以上，建议64G内存以及10GB以上硬盘空间，不然很可能OOM或者no space left。
+- 生成bmodel耗时大概30分钟以上，建议32G内存以及10GB以上硬盘空间。
 
 ## 2. 主要步骤
 
-模型编译前需要安装TPU-MLIR。安装好后需在TPU-MLIR环境中进入例程目录。先导出onnx，然后使用TPU-MLIR将onnx模型编译为BModel。编译的具体方法可参考《TPU-MLIR快速入门手册》的“3. 编译ONNX模型”(请从[算能官网](https://developer.sophgo.com/site/index.html?categoryActive=material)相应版本的SDK中获取)。
+模型编译前需要安装TPU-MLIR。安装好后需在TPU-MLIR环境中进入例程目录。先导出onnx，然后使用TPU-MLIR将onnx模型编译为BModel。编译的具体方法可参考《TPU-MLIR快速入门手册》的 “3. 编译ONNX模型”(请从[算能官网](https://developer.sophgo.com/site/index.html?categoryActive=material)相应版本的SDK中获取)。”
 
 ### 2.1 TPU-MLIR环境搭建
 
@@ -61,74 +61,41 @@ FaceFormer模型导出需要依赖[FaceFormer官方仓库](https://github.com/Ev
 
 ### 2.2.1 下载FaceFormer官方代码及权重
 
-**注：** FaceFormer官方库18G左右，在下载之前，要确认自己有huggingface官网的access token或者SSH key。
-```bash
-git lfs install
-git clone git@hf.co:THUDM/glm-4-9b-chat
-```
-如果git clone完代码之后出现卡住，可以尝试`ctrl+c`中断，然后进入仓库运行`git lfs pull`。
+请保证已经提前执行了 `download.sh`模型下载脚本，经过本脚本会自动下载官方的代码原始权重以及相关的依赖，并自动解析到 `tools`的文件夹下。
 
-如果无法从官网下载，也可以下载我们之前下好的，压缩包14G左右
+### 2.2.2 导出onnx
+
+如果您不想自己导出onnx，您也可以直接执行下面的命令，下载onnx的模型用于后续的模型编译：
 ```bash
 pip3 install dfss  --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple
-python3 -m dfss --url=open@sophgo.com:/ext_model_information/LLM/glm-4-9b-chat-torch.zip
-unzip glm-4-9b-chat-torch.zip
+python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/onnx.zip
+unzip onnx.zip
 ```
+如果您想自己尝试导出onnx的模型，可以参考以下步骤：
 
-### 2.1.2 对齐环境和代码：
-本例程的`tools`目录下提供了修改好之后的`config.json`和`modeling_chatglm.py`。可以直接替换掉原仓库的文件：
+首先请根据`python/requirements.txt`的环境要求，安装对应的环境依赖包：
 ```bash
-sudo apt-get update
-sudo apt-get install pybind11-dev
-pip install -r tools/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-cp tools/glm-4-9b-chat/config.json glm-4-9b-chat/
-cp tools/glm-4-9b-chat/modeling_chatglm.py glm-4-9b-chat/
+pip3 install -r python/requirements.txt
 ```
-
-### 2.1.3 导出onnx
-
-- 指定glm-4-9b-chat官方仓库的python路径
+- 导出所有onnx模型，如果过程中提示缺少某些组件，直接**pip3 install**组件即可
 
 ```bash
-# 将/workspace/glm-4-9b-chat换成docker环境中您的glm-4-9b-chat仓库的路径
-export PYTHONPATH=/workspace/glm-4-9b-chat:$PYTHONPATH
-```
-
-- 导出所有onnx模型，如果过程中提示缺少某些组件，直接**pip install**组件即可
-
-```bash
-# 将/workspace/glm-4-9b-chat换成docker环境中您的glm-4-9b-chat仓库的路径
-python3 tools/export_onnx.py --model_path /workspace/glm-4-9b-chat --seq_length 512
+python3 tools/export_onnx.py --model_name vocaset --wav_path "Data/wav/test2.mp3" --dataset vocaset
 ```
 此时有大量onnx模型被导出到本例程中`FaceFormer/models/onnx`的目录。
 
-### 2.2 bmodel编译
+### 2.3 bmodel编译
 
-目前TPU-MLIR支持1684x对FaceFormer进行INT8和INT4量化，使用如下命令生成bmodel。
-
+目前TPU-MLIR支持1684x对FaceFormer进行编译，使用如下命令生成bmodel。
+如果您没有下载testInput所需的模型测试输入，您也可以通过`tools/gen_npz.py`的脚本生成：
 ```bash
-mv ./tmp ./scripts
-./scripts/gen_bmodel.sh --mode int4 #int8
+python3 ./tools/gen_npz.py
 ```
+运行后，会自动在`models`下生成一个`testInput`的文件夹，里面会有多个模型输入测试的npz文件。
 
-其中，mode可以指定int8/int4，编译成功之后，模型将会存放在`models/BM1684X/`目录下。
-
-### 2.3 准备tokenizer
-
-如果您之前没有运行过下载脚本，那么您需要运行它以获取tokenizer。经过上面的步骤，现在你的目录下已经存在models文件夹，所以它只会下载tokenizer。
+准备好所有的数据之后，您可以使用下面的命令生成bmodel：
 ```bash
-# 安装unzip，若已安装请跳过，非ubuntu系统视情况使用yum或其他方式安装
-sudo apt install unzip
-chmod -R +x scripts/
-./scripts/download.sh
+./scripts/gen_bmodel.sh --model_path ./models
 ```
 
-
-
-
-```
-conda create -n faceformer python=3.9.19
-conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 cpuonly -c pytorch
-
-python3 export_onnx.py --model_name vocaset --wav_path "demo/wav/test2.mp3" --dataset vocaset
-```
+编译成功之后，模型将会存放在`models/BM1684X/`目录下。
