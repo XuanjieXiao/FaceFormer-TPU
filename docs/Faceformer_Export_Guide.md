@@ -1,4 +1,4 @@
-# FaceFormer模型导出与编译(还未完善)
+# FaceFormer模型导出与编译
 
 ## 1. 准备工作
 
