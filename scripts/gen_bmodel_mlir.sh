@@ -92,8 +92,6 @@ model_deploy.py \
     --compare_all \
     --dynamic
 
-model_tool --combine audio_encoder_1.bmodel audio_encoder_2.bmodel ppe.bmodel -o faceformer_f32.bmodel
-mv faceformer_f32.bmodel ../$target_dir
 # decoder
 model_transform.py \
     --model_name decoder \
@@ -113,6 +111,7 @@ model_deploy.py \
     --compare_all \
     --dynamic
 
-mv decoder_f16.bmodel ../$target_dir
+model_tool --combine decoder_f16.bmodel audio_encoder_1.bmodel audio_encoder_2.bmodel ppe.bmodel -o faceformer_f32.bmodel
+mv faceformer_f32.bmodel ../$target_dir
 popd
 popd

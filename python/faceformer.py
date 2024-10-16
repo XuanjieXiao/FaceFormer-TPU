@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import os,argparse,pickle
 import librosa
 import numpy as np
+import time
 from transformers import Wav2Vec2Processor
 
 # 生成mask，并将布尔数组转换为0和1的数组
@@ -28,13 +29,12 @@ def enc_dec_mask(dataset, T, S):
     return mask.astype(np.float32)
 
 class Faceformer:
-    def __init__(self, handle, engine1, engine2, args):
+    def __init__(self, handle, engine, args):
         self.args = args
         self.handle = handle
 
         # load bmodels
-        self.net_1 = engine1
-        self.net_2 = engine2
+        self.net = engine
 
         # initialize faceformer parameters
         self.dataset = self.args.dataset
@@ -44,7 +44,11 @@ class Faceformer:
         self.name_decoder = "decoder"
 
         # faceformer preprocess
+        self.preprocess_time_start = time.time()
         self.audio_feature, self.one_hot, self.template = self.audioPreprocess(self.args)
+        self.preprocess_time = time.time() - self.preprocess_time_start
+        print('preprocess_time: ', self.preprocess_time)
+
 
     def linear_interpolation(self, features, input_fps, output_fps, output_len=None):
         features = features.transpose(1, 2)
@@ -77,32 +81,32 @@ class Faceformer:
     def predict(self):
         input_encoder_1_tensors = {'audio_feature': self.audio_feature}
         frame_num = self.audio_feature.shape[1] // 534
-        output_encoder_1_names = self.net_1.get_output_names(self.name_encoder_1)
-        output_encoder_1_tensors = self.net_1.process(self.name_encoder_1, input_encoder_1_tensors)
+        output_encoder_1_names = self.net.get_output_names(self.name_encoder_1)
+        output_encoder_1_tensors = self.net.process(self.name_encoder_1, input_encoder_1_tensors)
         hidden_states_Transpose = torch.from_numpy(output_encoder_1_tensors[output_encoder_1_names[0]])
         hidden_states_out1 = self.linear_interpolation(hidden_states_Transpose, 50, 30, output_len=None)
         hidden_states_out1 = hidden_states_out1.numpy()
         input_encoder_2_tensors = {'hidden_states': hidden_states_out1, 'one_hot': self.one_hot}
-        output_encoder_2_names = self.net_1.get_output_names(self.name_encoder_2)
-        output_encoder_2_tensors = self.net_1.process(self.name_encoder_2, input_encoder_2_tensors)
+        output_encoder_2_names = self.net.get_output_names(self.name_encoder_2)
+        output_encoder_2_tensors = self.net.process(self.name_encoder_2, input_encoder_2_tensors)
         obj_embedding = output_encoder_2_tensors[output_encoder_2_names[0]]
         hidden_states = output_encoder_2_tensors[output_encoder_2_names[1]]
-        output_ppe_names = self.net_1.get_output_names(self.name_ppe)
-        output_decoder_names = self.net_2.get_output_names(self.name_decoder)
+        output_ppe_names = self.net.get_output_names(self.name_ppe)
+        output_decoder_names = self.net.get_output_names(self.name_decoder)
         for i in range(frame_num):
             if i==0:
                 vertice_emb = np.expand_dims(obj_embedding, axis=1) # (1,1,64)
                 style_emb = vertice_emb
                 input_ppe_tensors_first = {'embedding': style_emb}
-                output_ppe_tensors = self.net_1.process(self.name_ppe, input_ppe_tensors_first)
+                output_ppe_tensors = self.net.process(self.name_ppe, input_ppe_tensors_first)
                 vertice_input = output_ppe_tensors[output_ppe_names[0]]
             else:
                 input_ppe_tensors_next = {'embedding': vertice_emb}
-                output_ppe_tensors = self.net_1.process(self.name_ppe, input_ppe_tensors_next)
+                output_ppe_tensors = self.net.process(self.name_ppe, input_ppe_tensors_next)
                 vertice_input = output_ppe_tensors[output_ppe_names[0]]
             memory_mask = enc_dec_mask("vocaset", vertice_input.shape[1], frame_num)
             input_decoder_tensors = {'vertice_input': vertice_input, 'hidden_states': hidden_states, 'memory_mask': memory_mask}
-            output_decoder_tensors = self.net_2.process(self.name_decoder, input_decoder_tensors)
+            output_decoder_tensors = self.net.process(self.name_decoder, input_decoder_tensors)
             vertice_out = output_decoder_tensors[output_decoder_names[0]]
             new_output = output_decoder_tensors[output_decoder_names[1]]
             new_output = new_output + style_emb
@@ -115,25 +119,26 @@ class Faceformer:
 
 def main(args):
     handle = sail.Handle(args.dev_id)
-    engine1 = sail.Engine(args.bmodel_1, args.dev_id, sail.IOMode.SYSIO)
-    engine2 = sail.Engine(args.bmodel_2, args.dev_id, sail.IOMode.SYSIO)
-    ret = Faceformer(handle, engine1, engine2, args)
+    engine = sail.Engine(args.bmodel, args.dev_id, sail.IOMode.SYSIO)
+    
+    ret = Faceformer(handle, engine, args)
+    time_start = time.time()
     result = ret.predict()
-    print(result)
+    inference_time = time.time() - time_start
+    print('inference_time: ', inference_time)
     print('result.shape: ', result.shape)
 
 def argsparser():
     parser = argparse.ArgumentParser(description='FaceFormer: Speech-Driven 3D Facial Animation with Transformers')
     parser.add_argument("--model_name", type=str, default="vocaset")
-    parser.add_argument("--dataset", type=str, default="vocaset", help='vocaset or BIWI')
+    parser.add_argument("--dataset", type=str, default="vocaset", help='vocaset')
     parser.add_argument("--train_subjects", type=str, default="FaceTalk_170728_03272_TA FaceTalk_170904_00128_TA FaceTalk_170725_00137_TA FaceTalk_170915_00223_TA FaceTalk_170811_03274_TA FaceTalk_170913_03279_TA FaceTalk_170904_03276_TA FaceTalk_170912_03278_TA")
     parser.add_argument("--condition", type=str, default="FaceTalk_170913_03279_TA", help='select a conditioning subject from train_subjects')
     parser.add_argument("--subject", type=str, default="FaceTalk_170809_00138_TA", help='FaceTalk_170809_00138_TA select a subject from test_subjects or train_subjects')
     parser.add_argument("--wav_path", type=str, default="../Data/wav/test2.mp3", help='path of the input audio signal')
     parser.add_argument("--template_path", type=str, default="templates.pkl", help='path of the personalized templates')
-    parser.add_argument('--bmodel_1', type=str, default='../models/BM1684X/faceformer_f32.bmodel', help='path of encoder and ppe bmodel')
-    parser.add_argument('--bmodel_2', type=str, default='../models/BM1684X/decoder_f16.bmodel', help='path of decoder bmodel')
-    parser.add_argument('--dev_id', type=int, default=3, help='dev id')
+    parser.add_argument('--bmodel', type=str, default='../models/BM1684X/faceformer_f32.bmodel', help='path of encoder and ppe bmodel')
+    parser.add_argument('--dev_id', type=int, default=0, help='dev id')
     args = parser.parse_args()
     return args
 

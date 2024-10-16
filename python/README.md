@@ -24,6 +24,8 @@ python目录下提供了一个Python例程，具体情况如下：
 
 此外您还需要安装其他第三方库：
 ```bash
+sudo apt-get update
+sudo apt-get install libsndfile1
 pip3 install -r python/requirements.txt
 ```
 您还需要安装sophon-sail，参考[sophon-sail编译安装指南](https://doc.sophgo.com/sdk-docs/v24.04.01/docs_latest_release/docs/sophon-sail/docs/zh/html/1_build.html#id11)自己编译sophon-sail。
@@ -34,12 +36,15 @@ pip3 install -r python/requirements.txt
 
 此外您还需要安装其他第三方库：
 ```bash
+sudo apt-get update
+sudo apt-get install libsndfile1
 pip3 install -r python/requirements.txt
 ```
 由于本例程需要的sophon-sail版本较新，这里提供一个可用的sophon-sail whl包，SoC环境可以通过下面的命令下载：
 ```bash
 pip3 install dfss --upgrade
-python3 -m dfss --url=open@sophgo.com:sophon-demo/ChatGLM4/sail/soc/sophon_arm-3.8.0-py3-none-any.whl #arm soc, py38
+python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/sophon_arm-3.9.0-py3-none-any.whl #arm soc, py38
+pip3 install sophon_arm-3.9.0-py3-none-any.whl --force-reinstall
 ```
 如果您需要其他版本的sophon-sail，可以参考上一小节，下载源码自己编译。
 
@@ -48,9 +53,8 @@ python例程不需要编译，可以直接运行，PCIe平台和SoC平台的测�
 ### 2.1 参数说明
 
 ```bash
-usage: faceformer.py [--bmodel1 BMODEL] [--bmodel1 BMODEL] [--dev_id DEV_ID]
---bmodel_1: 用于推理的encoder和ppe的bmodel路径；
---bmodel_2: 用于推理的decoder的bmodel路径；
+usage: faceformer.py [--bmodel BMODEL] [--wav_path wav] [--dataset dataset] [--dev_id DEV_ID]
+--bmodel: 用于推理的bmodel路径；
 --model_name：模型的名字；
 --wav_path：测试的语音路径；
 --dataset：测试的数据集名字；
@@ -62,6 +66,7 @@ usage: faceformer.py [--bmodel1 BMODEL] [--bmodel1 BMODEL] [--dev_id DEV_ID]
 
 ```bash
 cd python
-python3 faceformer.py --bmodel_1 ../models/BM1684X/faceformer_f32.bmodel --bmodel_2 ../models/BM1684X/decoder_f16.bmodel --model_name vocaset --wav_path ../Data/wav/test1.wav --dataset vocaset --dev_id 3 
+python3 faceformer.py --bmodel ../models/BM1684X/faceformer_f32.bmodel --model_name vocaset --wav_path ../Data/wav/test1.wav --dataset vocaset --dev_id 0 
 ```
-在程序执行完成后，会输出结果以及结果的维度： “result.shape:  (XXX, 15069)”。
+
+在程序执行完成后，会输出运行时间、结果以及结果的维度： “result.shape:  (XXX, 15069)”。

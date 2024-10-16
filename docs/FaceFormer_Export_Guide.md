@@ -71,6 +71,8 @@ pip3 install dfss  --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple
 python3 -m dfss --url=open@sophgo.com:sophon-demo/FaceFormer/onnx.zip
 unzip onnx.zip
 ```
+此时，会解压出一个`onnx`的文件夹，请将该文件夹复制到`models`文件夹下即可。
+
 如果您想自己尝试导出onnx的模型，可以参考以下步骤：
 
 首先请根据`python/requirements.txt`的环境要求，安装对应的环境依赖包：
@@ -86,7 +88,7 @@ python3 tools/export_onnx.py --model_name vocaset --wav_path "Data/wav/test2.mp3
 
 ### 2.3 bmodel编译
 
-目前TPU-MLIR支持1684x对FaceFormer进行编译，使用如下命令生成bmodel。
+目前TPU-MLIR支持1684X对FaceFormer进行编译，使用如下命令生成bmodel。
 如果您没有下载testInput所需的模型测试输入，您也可以通过`tools/gen_npz.py`的脚本生成：
 ```bash
 python3 ./tools/gen_npz.py
@@ -95,7 +97,7 @@ python3 ./tools/gen_npz.py
 
 准备好所有的数据之后，您可以使用下面的命令生成bmodel：
 ```bash
-./scripts/gen_bmodel.sh --model_path ./models
+./scripts/gen_bmodel_mlir.sh --model_path ./models
 ```
 
-编译成功之后，模型将会存放在`models/BM1684X/`目录下。
+编译成功之后，`faceformer_f32.bmodel`模型将会存放在`models/BM1684X/`目录下。
