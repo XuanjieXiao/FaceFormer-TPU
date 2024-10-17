@@ -38,7 +38,7 @@ model.eval()
 
 
 # 设置目标文件夹路径
-export_path = './models/onnx'
+export_path = '../models/onnx'
 
 # 检查文件夹是否存在
 if not os.path.exists(export_path):
@@ -224,8 +224,8 @@ vertice_out = vertice_out + template
 #### test net ####
 prediction = vertice_out
 prediction = prediction.squeeze() # (seq_len, V*3)
-print(prediction.shape)
-print(prediction)
+# print(prediction.shape)
+# print(prediction)
 
 
 

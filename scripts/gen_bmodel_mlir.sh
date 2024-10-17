@@ -6,7 +6,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 # 用户指定的路径
-model_path="\$1"
+model_path=$1
 pushd $model_path
 
 # 设置目标目录
@@ -22,7 +22,17 @@ else
     echo "Directory '$target_dir' already exists."
 fi
 
-mkdir compile_dir
+
+# 检查目标目录是否存在
+if [ ! -d compile_dir ]; then
+    echo "Directory '$target_dir' does not exist. Creating it now..."
+    # 创建目录，包括必要的父目录
+    mkdir compile_dir
+    echo "Directory 'compile_dir' created successfully."
+else
+    echo "Directory 'compile_dir' already exists."
+fi
+
 pushd compile_dir
 
 # encoder1

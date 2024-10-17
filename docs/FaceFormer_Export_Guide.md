@@ -82,7 +82,8 @@ pip3 install -r python/requirements.txt
 - 导出所有onnx模型，如果过程中提示缺少某些组件，直接**pip3 install**组件即可
 
 ```bash
-python3 tools/export_onnx.py --model_name vocaset --wav_path "Data/wav/test2.mp3" --dataset vocaset
+cd tools
+python3 export_onnx.py --model_name vocaset --wav_path "../Data/wav/test2.mp3" --dataset vocaset
 ```
 此时有大量onnx模型被导出到本例程中`FaceFormer/models/onnx`的目录。
 
@@ -91,13 +92,14 @@ python3 tools/export_onnx.py --model_name vocaset --wav_path "Data/wav/test2.mp3
 目前TPU-MLIR支持1684X对FaceFormer进行编译，使用如下命令生成bmodel。
 如果您没有下载testInput所需的模型测试输入，您也可以通过`tools/gen_npz.py`的脚本生成：
 ```bash
-python3 ./tools/gen_npz.py
+cd tools
+python3 ./gen_npz.py
 ```
 运行后，会自动在`models`下生成一个`testInput`的文件夹，里面会有多个模型输入测试的npz文件。
 
 准备好所有的数据之后，您可以使用下面的命令生成bmodel：
 ```bash
-./scripts/gen_bmodel_mlir.sh --model_path ./models
+./scripts/gen_bmodel_mlir.sh models
 ```
 
 编译成功之后，`faceformer_f32.bmodel`模型将会存放在`models/BM1684X/`目录下。
