@@ -89,6 +89,7 @@ model_transform.py \
     --model_name ppe \
     --model_def ../onnx/ppe.onnx \
     --test_input ../testInput/input_ppe.npz \
+    --test_result ppe_top_output.npz \
     --input_shapes [[1,490,64]] \
     --mlir ppe.mlir \
     --dynamic
@@ -97,6 +98,7 @@ model_deploy.py \
     --mlir ppe.mlir \
     --quantize F16 \
     --test_input ../testInput/input_ppe.npz \
+    --test_reference ppe_top_output.npz \
     --chip bm1684x \
     --model ppe.bmodel \
     --compare_all \
@@ -107,15 +109,16 @@ model_transform.py \
     --model_name decoder \
     --model_def ../onnx/decoder.onnx \
     --test_input ../testInput/input_decoder.npz \
+    --test_result decoder_top_output.npz \
     --input_shapes [[1,490,64],[1,490,64],[490,490]] \
     --mlir decoder.mlir \
     --dynamic
-
 
 model_deploy.py \
     --mlir decoder.mlir \
     --quantize F16 \
     --test_input ../testInput/input_decoder.npz \
+    --test_reference decoder_top_output.npz \
     --chip bm1684x \
     --model decoder_f16.bmodel \
     --compare_all \

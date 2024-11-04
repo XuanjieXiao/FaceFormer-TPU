@@ -89,8 +89,8 @@ class Faceformer:
         input_encoder_2_tensors = {'hidden_states': hidden_states_out1, 'one_hot': self.one_hot}
         output_encoder_2_names = self.net.get_output_names(self.name_encoder_2)
         output_encoder_2_tensors = self.net.process(self.name_encoder_2, input_encoder_2_tensors)
-        obj_embedding = output_encoder_2_tensors[output_encoder_2_names[0]]
-        hidden_states = output_encoder_2_tensors[output_encoder_2_names[1]]
+        hidden_states = output_encoder_2_tensors[output_encoder_2_names[0]]
+        obj_embedding = output_encoder_2_tensors[output_encoder_2_names[1]]
         output_ppe_names = self.net.get_output_names(self.name_ppe)
         output_decoder_names = self.net.get_output_names(self.name_decoder)
         for i in range(frame_num):

@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import os
 
@@ -13,13 +12,13 @@ if not os.path.exists(test_path):
 else:
     print("文件夹已存在：", test_path)
 
-random_tensor = torch.rand(1, 262144)
-random_tensor2 = torch.rand(1, 490, 512)
-one_hot_random_tensor = torch.rand(1, 8)
-vertice_input = torch.rand(1, 490, 64)
-hidden_states = torch.rand(1, 490, 64)
-memory_mask = torch.rand(490, 490)
-embedding = torch.rand(1, 490, 64)
+random_tensor = np.random.rand(1, 262144).astype(np.float32)
+random_tensor2 = np.random.rand(1, 490, 512).astype(np.float32)
+one_hot_random_tensor = np.random.rand(1, 8).astype(np.float32)
+vertice_input = np.random.rand(1, 490, 64).astype(np.float32)
+hidden_states = np.random.rand(1, 490, 64).astype(np.float32)
+memory_mask = np.random.rand(490, 490) > 0.5
+embedding = np.random.rand(1, 490, 64).astype(np.float32)
 
 np.savez(os.path.join(test_path, 'input_encoder_1.npz'), **{'audio_feature':random_tensor})
 np.savez(os.path.join(test_path, 'input_encoder_2.npz'), **{'hidden_states': random_tensor2,'one_hot':one_hot_random_tensor})
