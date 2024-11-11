@@ -53,7 +53,7 @@ python例程不需要编译，可以直接运行，PCIe平台和SoC平台的测�
 ### 2.1 参数说明
 
 ```bash
-usage: faceformer.py [--bmodel BMODEL] [--wav_path wav] [--dataset dataset] [--dev_id DEV_ID]
+usage: python3 faceformer.py [--bmodel BMODEL] [--wav_path wav] [--dataset dataset] [--dev_id DEV_ID]
 --bmodel: 用于推理的bmodel路径；
 --model_name：模型的名字；
 --wav_path：测试的语音路径；
@@ -66,7 +66,7 @@ usage: faceformer.py [--bmodel BMODEL] [--wav_path wav] [--dataset dataset] [--d
 
 ```bash
 cd python
-python3 faceformer.py --bmodel ../models/BM1684X/faceformer_f32.bmodel --model_name vocaset --wav_path ../Data/wav/test1.wav --dataset vocaset --dev_id 0 
+python3 faceformer.py --bmodel ../models/BM1684X/faceformer_f32.bmodel --model_name vocaset --wav_path ../datasets/wav/test1.wav --dataset vocaset --dev_id 0 
 ```
 
 在程序执行完成后，会输出运行时间、结果以及结果的维度： “result.shape:  (XXX, 15069)”。

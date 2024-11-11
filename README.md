@@ -5,9 +5,8 @@
   - [1. 简介](#1-简介)
   - [2. 特性](#2-特性)
   - [3. 准备模型与数据](#3-准备模型与数据)
-  - [4. 模型编译](#4-模型编译)
-  - [5. 例程测试](#4-例程测试)
-  - [6. 程序性能测试](#5-程序性能测试)
+  - [4. 例程测试](#4-例程测试)
+  - [5. 程序性能测试](#5-程序性能测试)
 
 ## 1. 简介
 
@@ -45,7 +44,7 @@ chmod -R +x scripts/
 
 ```bash
 .
-├── Data
+├── datasets
 │   └── wav                           # 测试音频文件
 ├── docs
 │   └── Faceformer_Export_Guide.md    #FaceFormer onnx导出和bmodel编译指南
@@ -66,7 +65,10 @@ chmod -R +x scripts/
     ├── faceformer.py               #FaceFormer的pytorch模型文件
     ├── gen_npz.py                  #FaceFormer的模型编译所需的测试数据生成脚本
     ├── vocaset                     #pytorch模型的权重文件等
-    ├── wav2vec2-base-960h          #download.sh下载的wav2vec2模型
+    ├── wav2vec2-base-960h          #download.sh下载的wav2vec2模型，
+    │                               #是"facebook/wav2vec2-base-960h"的
+    │                               #模型库文件，会在代码内预加载，预下载
+    │                               #可以更好节约时间
     └── wav2vec.py
 ```
 
@@ -75,25 +77,14 @@ chmod -R +x scripts/
 
 此部分请参考[FaceFormer模型导出与编译](./docs/FaceFormer_Export_Guide.md)
 
-## 4. 模型编译
-
-导出的模型需要编译成BModel才能在SOPHON TPU上运行，如果使用下载好的BModel可跳过本节。建议使用TPU-MLIR编译BModel。
-
-模型编译前需要安装TPU-MLIR，本例程使用的TPU-MLIR版本是`v1.6`，具体可参考[TPU-MLIR环境搭建](../../docs/Environment_Install_Guide.md#1-tpu-mlir环境搭建)。安装好后需在TPU-MLIR环境中进入例程目录。使用TPU-MLIR将onnx模型编译为BModel，具体方法可参考《TPU-MLIR快速入门手册》的“3. 编译ONNX模型”(请从[算能官网](https://developer.sophgo.com/site/index.html?categoryActive=material)相应版本的SDK中获取)。
-
-​本例程在`scripts`目录下提供了TPU-MLIR编译FP32 BModel的脚本，请注意修改`gen_bmodel_mlir.sh`中已经默认了onnx模型路径、生成模型目录和输入大小shapes等参数，在执行时您只需要指定`onnx模型存放的上级目录`即可，如：
-
-```bash
-./scripts/gen_bmodel_mlir.sh models
-```
 
 ​执行上述命令会在`models/BM1684X`下生成`faceformer_f32.bmodel`文件，即转换好的FP32 BModel。
 
-## 5. 例程测试
+## 4. 例程测试
 
 - [Python例程](./python/README.md)
 
-## 6. 程序性能测试
+## 5. 程序性能测试
 
 这里的测试输入为：`test1.wav`，时长是13s。
 |    测试平台   |     测试程序       |           测试模型             |  preprocess_time(s)  |  inference_time(s)  | 
